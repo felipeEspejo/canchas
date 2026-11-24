@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Balance')}"></head>
+<body class="stadium-body">
+<th:block th:replace="~{fragments/layout :: nav('reportes')}"></th:block>
+
+<main class="stadium-shell">
+    <header class="stadium-header">
+        <div>
+            <h1 class="stadium-title">BALANCE DEL PERIODO</h1>
+            <p class="stadium-subtitle">Ingresos cobrados, asistencia de los equipos y uso de las canchas</p>
+        </div>
+    </header>
+
+    <th:block th:replace="~{fragments/layout :: notices}"></th:block>
+
+    <form class="report-filter" th:action="@{/reportes}" method="get" aria-label="Periodo">
+        <div class="field-group" style="margin-bottom:0;"><label for="desde" class="field-label">Desde</label><input id="desde" type="date" name="desde" class="field-input" th:value="${desde}" required></div>
+        <div class="field-group" style="margin-bottom:0;"><label for="hasta" class="field-label">Hasta</label><input id="hasta" type="date" name="hasta" class="field-input" th:value="${hasta}" required></div>
+        <button type="submit" class="btn-kick btn-kick--lime">VER BALANCE</button>
+        <a th:href="@{/reportes/balance.pdf}" class="btn-kick btn-kick--ghost">DESCARGAR PDF</a>
+    </form>
+
+    <th:block th:if="${report != null}" th:with="r=${report}">
+        <section class="scoreline" aria-label="Totales">
+            <div class="scoreline__cell scoreline__cell--lime"><span class="scoreline__label">INGRESOS COBRADOS</span><span class="led-value led-value--lime scoreline__number"><span th:replace="~{fragments/layout :: amount(${r.total})}">$0</span></span></div>
+            <div class="scoreline__cell scoreline__cell--chalk"><span class="scoreline__label">PARTIDOS JUGADOS</span><span class="led-value scoreline__number" th:text="${r.played}">9</span></div>
+            <div class="scoreline__cell scoreline__cell--chalk"><span class="scoreline__label">VALOR PROMEDIO POR PARTIDO</span><span class="led-value scoreline__number"><span th:replace="~{fragments/layout :: amount(${r.averageTicket()})}">$0</span></span></div>
+            <div class="scoreline__cell scoreline__cell--amber"><span class="scoreline__label">OCUPACIÓN DE CANCHAS</span><span class="led-value led-value--amber scoreline__number" th:text="${r.occupancyPercent} + '%'">12%</span></div>
+        </section>
+
+        <div class="two-col">
+            <section class="board" aria-label="Asistencia">
+                <div class="pitch-zone__header"><h2 class="pitch-zone__title">ASISTENCIA</h2>
+                    <span class="chip" th:classappend="${r.noShowPercent() > 15} ? 'chip--red' : 'chip--lime'" th:text="${r.noShowPercent()} + '% NO SE PRESENTÓ'">18%</span></div>
+                <div class="detail-kv">
+                    <div class="detail-kv__item"><span class="detail-kv__k">Jugados</span><span class="detail-kv__v" th:text="${r.played}">9</span></div>
+                    <div class="detail-kv__item"><span class="detail-kv__k">No se presentó</span><span class="detail-kv__v" th:text="${r.noShows}">2</span></div>
+                    <div class="detail-kv__item"><span class="detail-kv__k">Canceladas a tiempo</span><span class="detail-kv__v" th:text="${r.cancelled}">1</span></div>
+                    <div class="detail-kv__item"><span class="detail-kv__k">Horas jugadas</span><span class="detail-kv__v" th:text="${r.playedHours()}">14</span></div>
+                </div>
+            </section>
+
+            <section class="board" aria-label="Horas jugadas por franja">
+                <div class="pitch-zone__header"><h2 class="pitch-zone__title">HORAS POR FRANJA</h2></div>
+                <div class="band-grid">
+                    <div class="scoreline__cell" th:each="band : ${bands}" th:with="tone=${band.name() == 'DAY'} ? 'lime' : 'amber'"
+                         th:classappend="'scoreline__cell--' + ${tone}">
+                        <span class="scoreline__label" th:text="${#strings.toUpperCase(band.label)}">DIURNA</span>
+                        <span class="led-value scoreline__number" th:text="${r.hoursByBand.get(band)}">4</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <section class="possession-wrap" aria-label="Reparto por formato">
+            <div class="possession-labels">
+                <span style="color: var(--lime);" th:text="'FÚTBOL 5 — ' + ${#numbers.formatDecimal(r.percentOf(formats[0]), 1, 'POINT', 1, 'COMMA')} + '%'">FÚTBOL 5 — 44%</span>
+                <span style="color: var(--amber);" th:text="${#numbers.formatDecimal(r.percentOf(formats[1]), 1, 'POINT', 1, 'COMMA')} + '% — FÚTBOL 7'">56% — FÚTBOL 7</span>
+            </div>
+            <div class="possession-bar" role="img" th:attr="aria-label='Fútbol 5 ' + ${r.percentOf(formats[0])} + ' por ciento, fútbol 7 ' + ${r.percentOf(formats[1])} + ' por ciento'">
+                <div class="possession-bar__five" th:style="'width: ' + ${r.percentOf(formats[0])} + '%;'"></div>
+                <div class="possession-bar__seven" th:style="'width: ' + ${r.percentOf(formats[1])} + '%;'"></div>
+            </div>
+        </section>
+
+        <div class="two-col">
+            <section class="spotlight-chart" aria-label="Ingresos por día" style="margin-bottom: 0;">
+                <div class="pitch-zone__header"><h2 class="pitch-zone__title">INGRESOS POR DÍA</h2></div>
+                <div class="spotlight-chart__bars">
+                    <div class="spotlight-tower" th:each="d : ${r.days}">
+                        <span class="spotlight-tower__amount" th:text="'$' + ${#numbers.formatDecimal(d.amount.doubleValue() / 1000, 1, 0)} + 'k'">$190k</span>
+                        <div class="spotlight-tower__beam" th:style="'--value: ' + ${d.percentOfMax}"></div>
+                        <span class="spotlight-tower__day" th:text="${#temporals.format(d.day, 'dd/MM')}">17/11</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="board" aria-label="Equipos que más pagaron">
+                <div class="pitch-zone__header"><h2 class="pitch-zone__title">TOP EQUIPOS</h2></div>
+                <div class="ranking">
+                    <div class="ranking__row" th:each="t, i : ${r.topTeams}">
+                        <span class="ranking__pos" th:text="${i.count}">1</span>
+                        <strong th:text="${t.team}">LOS TIGRES FC</strong>
+                        <span class="mono-code" style="color: var(--muted);" th:text="${t.played} + (${t.played == 1} ? ' PARTIDO' : ' PARTIDOS')">2 PARTIDOS</span>
+                        <span class="mono-code"><span th:replace="~{fragments/layout :: money(${t.spent})}">$285.000 COP</span></span>
+                    </div>
+                    <p class="empty-pitch" th:if="${#lists.isEmpty(r.topTeams)}">Sin partidos jugados en el periodo.</p>
+                </div>
+            </section>
+        </div>
+    </th:block>
+</main>
+</body>
+</html>

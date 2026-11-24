@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Nueva reserva')}"></head>
+<body class="stadium-body">
+<th:block th:replace="~{fragments/layout :: nav('reservas')}"></th:block>
+
+<main class="stadium-shell">
+    <header class="stadium-header">
+        <div>
+            <h1 class="stadium-title">NUEVA RESERVA</h1>
+            <p class="stadium-subtitle">Paso 1: elige la franja y cotiza · Paso 2: confirma</p>
+        </div>
+        <div class="stadium-meta">
+            <a th:href="@{/agenda(fecha=${fecha})}" class="btn-kick btn-kick--ghost btn-kick--sm">VER AGENDA DEL DÍA</a>
+        </div>
+    </header>
+
+    <th:block th:replace="~{fragments/layout :: notices}"></th:block>
+
+    <div class="hybrid-grid">
+        <!-- Paso 1: un formulario GET que solo cotiza (no reserva nada) -->
+        <section class="referee-sheet" aria-label="Elegir franja">
+            <h2 class="referee-sheet__title">1 · FRANJA Y EQUIPO</h2>
+            <p class="referee-sheet__sub">Atención de 8:00 a 23:00, de 1 a 3 horas seguidas</p>
+            <form th:action="@{/reservas/nueva}" method="get">
+                <div class="field-group">
+                    <label for="cancha" class="field-label">Cancha</label>
+                    <select id="cancha" name="cancha" class="field-select" required>
+                        <option value="">Elige una cancha</option>
+                        <option th:each="c : ${courts}" th:value="${c.id}" th:selected="${c.id == cancha}"
+                                th:text="${c.code} + ' · ' + ${c.name} + ' (' + ${c.format.label} + ')'">F5-A · Cancha Norte (Fútbol 5)</option>
+                    </select>
+                </div>
+                <div class="two-col" style="margin-bottom:0; gap: var(--sp-3);">
+                    <div class="field-group">
+                        <label for="fecha" class="field-label">Día</label>
+                        <input id="fecha" type="date" name="fecha" class="field-input" th:value="${fecha}" required>
+                    </div>
+                    <div class="field-group">
+                        <label for="hora" class="field-label">Hora de inicio</label>
+                        <select id="hora" name="hora" class="field-select" required>
+                            <option value="">--:--</option>
+                            <option th:each="h : ${hours}" th:value="${h}" th:text="${h} + ':00'" th:selected="${h == hora}">19:00</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label for="horas" class="field-label">Duración</label>
+                    <select id="horas" name="horas" class="field-select">
+                        <option th:each="d : ${durations}" th:value="${d}" th:text="${d} + (${d == 1} ? ' hora' : ' horas')" th:selected="${d == horas}">1 hora</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label for="equipo" class="field-label">Equipo</label>
+                    <select id="equipo" name="equipo" class="field-select">
+                        <option value="">Elige el equipo</option>
+                        <option th:each="t : ${teams}" th:value="${t.id}" th:text="${t.name}" th:selected="${t.id == equipo}">LOS TIGRES FC</option>
+                    </select>
+                    <span class="field-hint">¿Equipo nuevo? <a th:href="@{/equipos(nuevo='')}" style="color: var(--lime);">Regístralo primero</a>.</span>
+                </div>
+                <button type="submit" class="btn-kick btn-kick--ghost btn-kick--block">COTIZAR</button>
+            </form>
+        </section>
+
+        <!-- Paso 2: cotización hora por hora y confirmación (POST) -->
+        <aside class="side-stack">
+            <section class="board" aria-label="Cotización">
+                <div class="pitch-zone__header">
+                    <h2 class="pitch-zone__title">2 · COTIZACIÓN</h2>
+                    <span class="chip chip--lime" th:if="${quote != null}">LISTA</span>
+                </div>
+
+                <p class="empty-pitch" th:if="${quote == null and quoteProblem == null}">Elige cancha, día y hora y pulsa COTIZAR para ver el precio.</p>
+                <div class="flash-banner flash-banner--error" th:if="${quoteProblem}">
+                    <span class="chip chip--red">NO DISPONIBLE</span><span th:text="${quoteProblem}">La cancha está fuera de servicio</span>
+                </div>
+
+                <th:block th:if="${quote != null}">
+                    <div class="detail-kv">
+                        <div class="detail-kv__item"><span class="detail-kv__k">Cancha</span><span class="detail-kv__v" th:text="${quoteCourt != null} ? ${quoteCourt.code} + ' · ' + ${quoteCourt.format.label} : '-'">F5-A · Fútbol 5</span></div>
+                        <div class="detail-kv__item"><span class="detail-kv__k">Día</span><span class="detail-kv__v" th:text="${#temporals.format(quoteSlot.date, 'EEE dd/MM/yyyy')}">mar 24/11/2026</span></div>
+                        <div class="detail-kv__item" style="grid-column: 1 / -1;"><span class="detail-kv__k">Franja</span><span class="detail-kv__v" th:text="${quoteSlot.label()}">19:00 – 21:00</span></div>
+                    </div>
+                    <div class="quote-lines">
+                        <div class="quote-line" th:each="c : ${quote.charges}" th:classappend="'quote-line--' + ${c.band.name()}">
+                            <span th:text="${c.label()}">19:00 – 20:00</span>
+                            <span class="chip" th:classappend="${c.band.name() == 'DAY'} ? 'chip--lime' : 'chip--amber'" th:text="${#strings.toUpperCase(c.band.label)}">NOCTURNA</span>
+                            <strong><span th:replace="~{fragments/layout :: money(${c.amount})}">$95.000 COP</span></strong>
+                        </div>
+                    </div>
+                    <div class="quote-total">
+                        <span class="scoreline__label">TOTAL A COBRAR AL JUGAR</span>
+                        <span class="led-value led-value--lime" style="font-size: 2.2rem;"><span th:replace="~{fragments/layout :: money(${quote.total()})}">$190.000 COP</span></span>
+                    </div>
+
+                    <form th:action="@{/reservas}" method="post" style="margin-top: var(--sp-4);">
+                        <input type="hidden" name="cancha" th:value="${cancha}">
+                        <input type="hidden" name="fecha" th:value="${fecha}">
+                        <input type="hidden" name="hora" th:value="${hora}">
+                        <input type="hidden" name="horas" th:value="${horas}">
+                        <input type="hidden" name="equipo" th:value="${equipo}">
+                        <p class="field-hint" th:if="${equipo == null}">Falta elegir el equipo en el paso 1 para poder confirmar.</p>
+                        <button type="submit" class="btn-kick btn-kick--lime btn-kick--block" th:disabled="${equipo == null}">CONFIRMAR RESERVA</button>
+                    </form>
+                </th:block>
+            </section>
+
+            <section class="board" aria-label="Reglas de reserva">
+                <h2 class="pitch-zone__title" style="margin-bottom: var(--sp-3);">REGLAMENTO</h2>
+                <ul class="rule-list">
+                    <li>Tarifa diurna: lunes a viernes antes de las 18:00. Nocturna: desde las 18:00 y todo el fin de semana.</li>
+                    <li>Una cancha no se reserva dos veces a la misma hora, y un equipo no puede tener dos partidos a la vez.</li>
+                    <li>Cada equipo puede tener hasta 3 reservas pendientes.</li>
+                    <li>Se cancela hasta 2 horas antes. Dos inasistencias en 30 días suspenden al equipo.</li>
+                </ul>
+            </section>
+        </aside>
+    </div>
+</main>
+</body>
+</html>

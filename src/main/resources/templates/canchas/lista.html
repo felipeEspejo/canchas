@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Canchas')}"></head>
+<body class="stadium-body">
+<th:block th:replace="~{fragments/layout :: nav('canchas')}"></th:block>
+
+<main class="stadium-shell">
+    <header class="stadium-header">
+        <div>
+            <h1 class="stadium-title">CANCHAS DEL COMPLEJO</h1>
+            <p class="stadium-subtitle">Una cancha no se borra: se saca de servicio y conserva su historial</p>
+        </div>
+        <div class="stadium-meta">
+            <a th:href="@{/canchas(nueva='')}" class="btn-kick btn-kick--lime">ABRIR CANCHA</a>
+        </div>
+    </header>
+
+    <th:block th:replace="~{fragments/layout :: notices}"></th:block>
+
+    <section class="scoreline" aria-label="Resumen de canchas">
+        <div class="scoreline__cell scoreline__cell--lime"><span class="scoreline__label">EN SERVICIO</span><span class="led-value led-value--lime scoreline__number" th:text="${activeCount}">5</span></div>
+        <div class="scoreline__cell scoreline__cell--chalk"><span class="scoreline__label">FÚTBOL 5</span><span class="led-value scoreline__number" th:text="${fiveCount}">3</span></div>
+        <div class="scoreline__cell scoreline__cell--chalk"><span class="scoreline__label">FÚTBOL 7</span><span class="led-value scoreline__number" th:text="${sevenCount}">2</span></div>
+        <div class="scoreline__cell scoreline__cell--amber"><span class="scoreline__label">FUERA DE SERVICIO</span><span class="led-value led-value--amber scoreline__number" th:text="${#lists.size(courts) - activeCount}">0</span></div>
+    </section>
+
+    <section class="courts-board-grid" aria-label="Canchas">
+        <article class="court-tile" th:each="c : ${courts}" th:classappend="${c.active} ? '' : 'court-tile--off'">
+            <div class="pitch-field" th:classappend="${c.format.name() == 'FUTBOL_7'} ? 'pitch-field--seven' : 'pitch-field--five'">
+                <div th:replace="~{fragments/layout :: lines}"></div>
+                <div class="pitch-field__top">
+                    <span class="pitch-field__code" th:text="${c.code}">F5-A</span>
+                    <span class="chip" th:classappend="${c.active} ? 'chip--lime' : 'chip--neutral'" th:text="${c.active} ? 'EN SERVICIO' : 'FUERA DE SERVICIO'">EN SERVICIO</span>
+                </div>
+                <div class="pitch-field__center"><div class="pitch-field__team" th:text="${#strings.toUpperCase(c.name)}">CANCHA NORTE</div></div>
+                <div class="pitch-field__bottom"><span class="mono-code" th:text="${c.format.label} + ' · ' + ${c.format.players} + ' jugadores'">Fútbol 5 · 10 jugadores</span></div>
+            </div>
+            <div class="court-tile__actions">
+                <a th:href="@{/canchas(editar=${c.id})}" class="btn-kick btn-kick--ghost btn-kick--sm">EDITAR</a>
+                <form th:if="${c.active}" class="inline-form" th:action="@{/canchas/{id}/desactivar(id=${c.id})}" method="post">
+                    <button type="submit" class="btn-kick btn-kick--red btn-kick--sm">SACAR DE SERVICIO</button>
+                </form>
+                <form th:unless="${c.active}" class="inline-form" th:action="@{/canchas/{id}/activar(id=${c.id})}" method="post">
+                    <button type="submit" class="btn-kick btn-kick--lime btn-kick--sm">VOLVER A SERVICIO</button>
+                </form>
+            </div>
+        </article>
+    </section>
+    <p class="empty-pitch" th:if="${#lists.isEmpty(courts)}">Todavía no hay canchas. Abre la primera.</p>
+</main>
+
+<div class="slide-backdrop" role="dialog" aria-modal="true" aria-labelledby="court-panel" th:if="${showCreate or editing != null}">
+    <a class="overlay-close" th:href="@{/canchas}" aria-label="Cerrar"></a>
+    <div class="slide-panel">
+        <div class="slide-panel__head">
+            <div>
+                <span class="chip chip--lime" th:text="${editing != null} ? 'EDICIÓN' : 'NUEVA CANCHA'">NUEVA CANCHA</span>
+                <h2 id="court-panel" class="stadium-title" th:text="${editing != null} ? 'EDITAR CANCHA' : 'ABRIR CANCHA'">ABRIR CANCHA</h2>
+            </div>
+            <a th:href="@{/canchas}" class="btn-kick btn-kick--ghost btn-kick--sm">CERRAR</a>
+        </div>
+        <form th:action="${editing != null} ? @{/canchas/{id}(id=${editing.id})} : @{/canchas}" th:method="${editing != null} ? 'put' : 'post'">
+            <div class="field-group">
+                <label for="codigo" class="field-label">Código</label>
+                <input id="codigo" name="codigo" class="field-input" maxlength="10" required autofocus placeholder="Ej. F5-D"
+                       th:value="${editing != null} ? ${editing.code}">
+            </div>
+            <div class="field-group">
+                <label for="nombre" class="field-label">Nombre</label>
+                <input id="nombre" name="nombre" class="field-input" maxlength="40" required placeholder="Ej. Cancha Occidente"
+                       th:value="${editing != null} ? ${editing.name}">
+            </div>
+            <div class="field-group">
+                <label for="formato" class="field-label">Formato</label>
+                <select id="formato" name="formato" class="field-select">
+                    <option th:each="f : ${formats}" th:value="${f}" th:text="${f.label}" th:selected="${editing != null and editing.format == f}">Fútbol 5</option>
+                </select>
+                <span class="field-hint">El formato no se puede cambiar si la cancha ya tiene reservas.</span>
+            </div>
+            <div class="form-actions">
+                <a th:href="@{/canchas}" class="btn-kick btn-kick--ghost">CANCELAR</a>
+                <button type="submit" class="btn-kick btn-kick--lime">GUARDAR</button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

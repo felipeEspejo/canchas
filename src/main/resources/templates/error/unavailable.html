@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('VAR revisando')}"></head>
+<body class="stadium-body">
+<main class="incident-stage">
+    <section class="incident-board incident-board--amber">
+        <div class="incident-visual" aria-hidden="true"><div class="var-screen-prop">VAR</div></div>
+        <span class="chip chip--amber">REVISIÓN DE JUGADA</span>
+        <h1 class="stadium-title">VAR REVISANDO</h1>
+        <p style="color: var(--chalk-soft);">Esta función todavía no está disponible: el balance en PDF todavía no está listo.</p>
+        <p class="mono-code" style="color: var(--muted);" th:if="${message}" th:text="${message}"></p>
+        <a th:href="@{/}" class="btn-kick btn-kick--lime">VOLVER A LA AGENDA</a>
+    </section>
+</main>
+</body>
+</html>

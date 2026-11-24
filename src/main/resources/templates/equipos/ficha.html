@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Ficha del equipo')}"></head>
+<body class="stadium-body">
+<th:block th:replace="~{fragments/layout :: nav('equipos')}"></th:block>
+
+<main class="stadium-shell" th:with="t=${record.team}">
+    <header class="stadium-header">
+        <div>
+            <h1 class="stadium-title" th:text="${t.name}">LOS TIGRES FC</h1>
+            <p class="stadium-subtitle" th:text="'Capitán: ' + ${t.captain} + ' · Tel. ' + ${t.phone}">Capitán: Andrés Gómez</p>
+        </div>
+        <div class="stadium-meta">
+            <span class="chip chip--red" th:if="${record.sanctioned}">SANCIONADO: 2+ INASISTENCIAS EN 30 DÍAS</span>
+            <span class="chip chip--lime" th:unless="${record.sanctioned}">AL DÍA</span>
+            <a th:unless="${record.sanctioned}" th:href="@{/reservas/nueva(equipo=${t.id})}" class="btn-kick btn-kick--lime btn-kick--sm">NUEVA RESERVA</a>
+            <a th:href="@{/equipos(editar=${t.id})}" class="btn-kick btn-kick--ghost btn-kick--sm">EDITAR DATOS</a>
+        </div>
+    </header>
+
+    <th:block th:replace="~{fragments/layout :: notices}"></th:block>
+
+    <section class="scoreline" aria-label="Números del equipo">
+        <div class="scoreline__cell scoreline__cell--lime"><span class="scoreline__label">PARTIDOS JUGADOS</span><span class="led-value led-value--lime scoreline__number" th:text="${record.played}">5</span></div>
+        <div class="scoreline__cell scoreline__cell--amber"><span class="scoreline__label">PENDIENTES (MÁX. 3)</span><span class="led-value led-value--amber scoreline__number" th:text="${record.pending}">1</span></div>
+        <div class="scoreline__cell scoreline__cell--chalk"><span class="scoreline__label">NO SE PRESENTÓ / CANCELADAS</span><span class="led-value scoreline__number" th:text="${record.noShows} + ' / ' + ${record.cancelled}">0 / 1</span></div>
+        <div class="scoreline__cell scoreline__cell--lime"><span class="scoreline__label">TOTAL PAGADO</span><span class="led-value led-value--lime scoreline__number"><span th:replace="~{fragments/layout :: amount(${record.spent})}">$0</span></span></div>
+    </section>
+
+    <section aria-label="Historial de reservas">
+        <div class="pitch-zone__header"><h2 class="pitch-zone__title">HISTORIAL DE RESERVAS</h2></div>
+        <div class="fixture-list">
+            <th:block th:each="v : ${record.bookings}">
+                <article th:replace="~{fragments/layout :: bookingRow(${v})}"></article>
+            </th:block>
+            <p class="empty-pitch" th:if="${#lists.isEmpty(record.bookings)}">Este equipo todavía no ha reservado.</p>
+        </div>
+    </section>
+</main>
+</body>
+</html>

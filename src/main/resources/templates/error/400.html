@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Jugada invalidada')}"></head>
+<body class="stadium-body">
+<main class="incident-stage">
+    <section class="incident-board incident-board--amber">
+        <div class="incident-visual" aria-hidden="true"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"></path></svg></div>
+        <span class="chip chip--amber">INCIDENCIA 400</span>
+        <h1 class="stadium-title">JUGADA INVALIDADA</h1>
+        <p style="color: var(--chalk-soft);">La solicitud no pudo procesarse. Revisa la información e inténtalo nuevamente.</p>
+        <p class="mono-code" style="color: var(--muted);" th:if="${message}" th:text="${message}"></p>
+        <a th:href="@{/}" class="btn-kick btn-kick--lime">VOLVER A LA AGENDA</a>
+    </section>
+</main>
+</body>
+</html>

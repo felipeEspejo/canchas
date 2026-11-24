@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Tarifas')}"></head>
+<body class="stadium-body">
+<th:block th:replace="~{fragments/layout :: nav('tarifas')}"></th:block>
+
+<main class="stadium-shell">
+    <header class="stadium-header">
+        <div>
+            <h1 class="stadium-title">TARIFAS POR FRANJA</h1>
+            <p class="stadium-subtitle">Cada hora se cobra según su franja · los cambios aplican a las reservas nuevas</p>
+        </div>
+    </header>
+
+    <th:block th:replace="~{fragments/layout :: notices}"></th:block>
+
+    <div class="flash-stack">
+        <div class="flash-banner flash-banner--info">
+            <span class="chip chip--amber">FRANJAS</span>
+            <span th:text="'Diurna: lunes a viernes antes de las ' + ${nightFrom} + ':00. Nocturna: desde las ' + ${nightFrom} + ':00 y sábados y domingos todo el día. La nocturna no puede ser menor que la diurna.'">Diurna / nocturna</span>
+        </div>
+    </div>
+
+    <section class="jersey-grid" aria-label="Tarifas por formato">
+        <article class="jersey-panel" th:each="p : ${plans}">
+            <div class="jersey-panel__collar" aria-hidden="true"></div>
+            <div>
+                <h2 class="jersey-panel__name" th:text="${#strings.toUpperCase(p.format.label)}">FÚTBOL 5</h2>
+                <div class="jersey-panel__players" th:text="${p.format.players} + ' JUGADORES'">10 JUGADORES</div>
+            </div>
+            <div class="jersey-panel__price">
+                <span class="scoreline__label">HORA DIURNA</span>
+                <div class="led-value led-value--lime jersey-panel__amount"><span th:replace="~{fragments/layout :: money(${p.dayRate})}">$70.000 COP</span></div>
+            </div>
+            <div class="jersey-panel__price">
+                <span class="scoreline__label">HORA NOCTURNA / FIN DE SEMANA</span>
+                <div class="led-value led-value--amber jersey-panel__amount"><span th:replace="~{fragments/layout :: money(${p.nightRate})}">$95.000 COP</span></div>
+            </div>
+            <details class="jersey-details">
+                <summary class="btn-kick btn-kick--ghost btn-kick--block">EDITAR TARIFAS</summary>
+                <form class="jersey-details__form" th:action="@{/tarifas/{f}(f=${p.format})}" th:method="put">
+                    <div class="field-group">
+                        <label class="field-label" th:for="'dia-' + ${p.format}">Hora diurna (COP)</label>
+                        <input th:id="'dia-' + ${p.format}" type="number" name="diurna" min="1000" step="1000" required class="field-input" th:value="${p.dayRate.toBigInteger()}">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" th:for="'noche-' + ${p.format}">Hora nocturna (COP)</label>
+                        <input th:id="'noche-' + ${p.format}" type="number" name="nocturna" min="1000" step="1000" required class="field-input" th:value="${p.nightRate.toBigInteger()}">
+                    </div>
+                    <button type="submit" class="btn-kick btn-kick--lime btn-kick--block">GUARDAR</button>
+                </form>
+            </details>
+        </article>
+    </section>
+</main>
+</body>
+</html>

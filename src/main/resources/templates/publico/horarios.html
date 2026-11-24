@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Horarios libres')}"></head>
+<body class="stadium-body">
+<main class="scoreboard-public">
+    <header class="scoreboard-public__top">
+        <div class="stadium-brand">
+            <th:block th:replace="~{fragments/layout :: brand('HORARIOS LIBRES EN VIVO')}"></th:block>
+        </div>
+        <div class="stadium-meta">
+            <span class="chip chip--lime">ABIERTO DE 8:00 A 23:00</span>
+            <span class="chip chip--neutral">RESERVAS EN RECEPCIÓN</span>
+        </div>
+    </header>
+
+    <!-- Una pestaña por día: hoy y los próximos 6 -->
+    <nav class="day-tabs" aria-label="Elegir día">
+        <a th:each="d : ${week}" th:href="@{/horarios(fecha=${d})}" class="day-tab" th:classappend="${d == day} ? 'day-tab--active'"
+           th:attr="aria-current=${d == day} ? 'date'">
+            <span th:text="${#temporals.format(d, 'EEE')}">mar</span>
+            <strong th:text="${#temporals.format(d, 'dd')}">24</strong>
+            <span th:text="${#temporals.format(d, 'MMM')}">nov</span>
+        </a>
+    </nav>
+
+    <!-- Solo cantidades de canchas libres por hora: nunca equipos ni reservas -->
+    <section aria-label="Canchas libres por hora">
+        <div class="scoreboard-public__grid">
+            <article class="mega-board" th:each="f : ${availability.formats}"
+                     th:classappend="${f.freeHours() == 0} ? 'mega-board--busy' : 'mega-board--free'">
+                <div class="mega-board__head">
+                    <h1 class="mega-board__title" th:text="${#strings.toUpperCase(f.format.label)}">FÚTBOL 5</h1>
+                    <span class="chip chip--neutral" th:text="${f.courts} + (${f.courts == 1} ? ' CANCHA' : ' CANCHAS')">3 CANCHAS</span>
+                </div>
+                <div class="mega-board__digits">
+                    <span class="mega-board__free" th:text="${f.freeHours()}">32</span>
+                    <span class="mega-board__caption">HORAS-CANCHA LIBRES</span>
+                </div>
+                <div class="hour-strip">
+                    <div th:each="h : ${f.hours}" class="hour-chip"
+                         th:classappend="${h.past} ? 'hour-chip--past' : (${h.free > 0} ? 'hour-chip--free' : 'hour-chip--full')"
+                         th:attr="aria-label=${h.hour} + ':00, ' + (${h.past} ? 'ya pasó' : ${h.free} + ' de ' + ${h.total} + ' libres')">
+                        <span th:text="${h.hour} + ':00'">19:00</span>
+                        <strong th:text="${h.past} ? '–' : ${h.free}">2</strong>
+                    </div>
+                </div>
+            </article>
+        </div>
+        <p class="empty-pitch" th:if="${#lists.isEmpty(availability.formats)}">No hay canchas en servicio en este momento.</p>
+    </section>
+
+    <footer class="scoreboard-public__footer">
+        <span>SE ACTUALIZA SOLO CADA MINUTO · RESERVA DE 1 A 3 HORAS</span>
+        <span>TARIFA NOCTURNA DESDE LAS 18:00 Y TODO EL FIN DE SEMANA</span>
+    </footer>
+</main>
+</body>
+</html>

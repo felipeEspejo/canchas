@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Fuera de lugar')}"></head>
+<body class="stadium-body">
+<main class="incident-stage">
+    <section class="incident-board">
+        <div class="incident-visual" aria-hidden="true"><div class="offside-prop"></div></div>
+        <span class="chip chip--lime">INCIDENCIA 404</span>
+        <h1 class="stadium-title">FUERA DE LUGAR</h1>
+        <p style="color: var(--chalk-soft);">La página que buscas no está en el terreno de juego.</p>
+        <p class="mono-code" style="color: var(--muted);" th:if="${message}" th:text="${message}"></p>
+        <a th:href="@{/}" class="btn-kick btn-kick--lime">VOLVER A LA AGENDA</a>
+    </section>
+</main>
+</body>
+</html>

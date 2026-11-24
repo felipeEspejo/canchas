@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Agenda')}"></head>
+<body class="stadium-body">
+<th:block th:replace="~{fragments/layout :: nav('agenda')}"></th:block>
+
+<main class="stadium-shell">
+    <header class="stadium-header">
+        <div>
+            <h1 class="stadium-title" th:text="'AGENDA · ' + ${#strings.toUpperCase(#temporals.format(day, 'EEEE dd/MM'))}">AGENDA · MARTES 24/11</h1>
+            <p class="stadium-subtitle" th:text="${day == today} ? 'Hoy · las horas libres son enlaces para reservar' : 'Las horas libres son enlaces para reservar'">Hoy</p>
+        </div>
+        <div class="date-nav">
+            <a th:href="@{/agenda(fecha=${day.minusDays(1)})}" class="btn-kick btn-kick--ghost btn-kick--sm" aria-label="Día anterior">◀ ANTERIOR</a>
+            <a th:href="@{/agenda}" class="btn-kick btn-kick--ghost btn-kick--sm" th:classappend="${day == today} ? 'is-disabled'">HOY</a>
+            <a th:href="@{/agenda(fecha=${day.plusDays(1)})}" class="btn-kick btn-kick--ghost btn-kick--sm" aria-label="Día siguiente">SIGUIENTE ▶</a>
+            <form th:action="@{/agenda}" method="get">
+                <label for="fecha" class="sr-only">Ir a una fecha</label>
+                <input id="fecha" type="date" name="fecha" class="field-input" th:value="${day}">
+                <button type="submit" class="btn-kick btn-kick--ghost btn-kick--sm">IR</button>
+            </form>
+            <a th:href="@{/reservas/nueva(fecha=${day})}" class="btn-kick btn-kick--lime btn-kick--sm">NUEVA RESERVA</a>
+        </div>
+    </header>
+
+    <th:block th:replace="~{fragments/layout :: notices}"></th:block>
+
+    <section class="scoreline" aria-label="Resumen del día">
+        <div class="scoreline__cell scoreline__cell--lime"><span class="scoreline__label">OCUPACIÓN DEL DÍA</span>
+            <span class="led-value led-value--lime scoreline__number" th:text="${agenda.occupancyPercent()} + '%'">34%</span></div>
+        <div class="scoreline__cell scoreline__cell--chalk"><span class="scoreline__label">HORAS RESERVADAS</span>
+            <span class="led-value scoreline__number" th:text="${agenda.bookedHours} + ' / ' + ${agenda.openHours}">12 / 75</span></div>
+        <div class="scoreline__cell scoreline__cell--amber"><span class="scoreline__label">POR CERRAR</span>
+            <span class="led-value led-value--amber scoreline__number" th:text="${agenda.pendingCount}">3</span></div>
+        <div class="scoreline__cell scoreline__cell--lime"><span class="scoreline__label">INGRESO ESPERADO</span>
+            <span class="led-value led-value--lime scoreline__number"><span th:replace="~{fragments/layout :: amount(${agenda.expectedRevenue})}">$0</span></span></div>
+    </section>
+
+    <section class="board" aria-label="Agenda de canchas por hora">
+        <div class="pitch-zone__header">
+            <h2 class="pitch-zone__title">CANCHAS × HORAS</h2>
+            <div class="legend">
+                <span class="chip chip--amber">RESERVADA</span>
+                <span class="chip chip--lime">JUGADA</span>
+                <span class="chip chip--red">NO SE PRESENTÓ</span>
+                <span class="chip chip--neutral">LIBRE: CLIC PARA RESERVAR</span>
+            </div>
+        </div>
+
+        <div class="agenda-wrap" th:unless="${#lists.isEmpty(agenda.rows)}">
+            <div class="agenda" role="grid">
+                <div class="agenda__corner" role="columnheader">CANCHA</div>
+                <div th:each="h : ${agenda.hours}" class="agenda__hour" role="columnheader"
+                     th:classappend="${h == currentHour} ? 'agenda__hour--now'" th:text="${h} + ':00'">8:00</div>
+
+                <th:block th:each="row : ${agenda.rows}">
+                    <div class="agenda__court" role="rowheader">
+                        <strong th:text="${row.court.code}">F5-A</strong>
+                        <span th:text="${row.court.name} + ' · ' + ${row.court.format.label}">Cancha Norte · Fútbol 5</span>
+                    </div>
+                    <th:block th:each="cell : ${row.cells}">
+                        <a th:if="${cell.free() and !cell.past}" class="slot slot--free"
+                           th:href="@{/reservas/nueva(cancha=${row.court.id}, fecha=${agenda.date}, hora=${cell.hour})}"
+                           th:attr="aria-label='Reservar ' + ${row.court.code} + ' a las ' + ${cell.hour} + ':00'">+ RESERVAR</a>
+                        <span th:if="${cell.free() and cell.past}" class="slot slot--past" aria-hidden="true"></span>
+                        <a th:unless="${cell.free()}" class="slot slot--booking"
+                           th:classappend="'slot--' + ${#strings.toLowerCase(cell.booking.booking.status.name())}"
+                           th:style="'grid-column: span ' + ${cell.span}"
+                           th:href="@{/reservas/{id}(id=${cell.booking.booking.id})}">
+                            <strong th:text="${cell.booking.team != null} ? ${cell.booking.team.name} : '-'">LOS TIGRES FC</strong>
+                            <span th:text="${cell.booking.booking.slot.label()} + ' · ' + ${#strings.toUpperCase(cell.booking.booking.status.label)}">19:00 – 21:00 · RESERVADA</span>
+                        </a>
+                    </th:block>
+                </th:block>
+            </div>
+        </div>
+        <p class="empty-pitch" th:if="${#lists.isEmpty(agenda.rows)}">No hay canchas en servicio. Ábrelas en Canchas (administración).</p>
+    </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Ingreso del personal')}"></head>
+<body class="stadium-body">
+<main class="accreditation-split">
+    <section class="accreditation-pitch">
+        <div class="stadium-brand">
+            <th:block th:replace="~{fragments/layout :: brand('RESERVAS POR HORA')}"></th:block>
+        </div>
+        <div class="accreditation-pitch__stage" aria-hidden="true">
+            <div class="accreditation-pitch__turf">
+                <span class="accreditation-pitch__box-left"></span>
+                <span class="accreditation-pitch__box-right"></span>
+                <span class="accreditation-pitch__goal-left"></span>
+                <span class="accreditation-pitch__goal-right"></span>
+            </div>
+        </div>
+        <div>
+            <p class="accreditation-pitch__headline">LA AGENDA DEL COMPLEJO</p>
+            <p class="accreditation-pitch__sub">Reservas por hora, equipos, tarifas diurnas y nocturnas.</p>
+        </div>
+    </section>
+
+    <section class="accreditation-zone">
+        <div class="press-pass">
+            <div class="press-pass__slot" aria-hidden="true"></div>
+            <div class="press-pass__stripe" aria-hidden="true"></div>
+            <div class="press-pass__head">
+                <div>
+                    <span class="press-pass__tag">SOLO PERSONAL</span>
+                    <h1 class="stadium-title">INGRESO</h1>
+                </div>
+                <span class="chip chip--lime">STAFF</span>
+            </div>
+
+            <div class="flash-stack" th:if="${param.error != null or param.salio != null}">
+                <div class="flash-banner flash-banner--error" role="alert" th:if="${param.error}">
+                    <span class="chip chip--red">ATENCIÓN</span><span>Usuario o contraseña incorrectos.</span>
+                </div>
+                <div class="flash-banner flash-banner--success" role="status" th:if="${param.salio}">
+                    <span class="chip chip--lime">LISTO</span><span>Cerraste la sesión.</span>
+                </div>
+            </div>
+
+            <form th:action="@{/ingreso}" method="post">
+                <div class="field-group">
+                    <label for="username" class="field-label">Usuario</label>
+                    <input id="username" name="username" type="text" class="field-input" autocomplete="username" required autofocus>
+                </div>
+                <div class="field-group">
+                    <label for="password" class="field-label">Contraseña</label>
+                    <input id="password" name="password" type="password" class="field-input" autocomplete="current-password" required>
+                </div>
+                <button type="submit" class="btn-kick btn-kick--lime btn-kick--block">ENTRAR</button>
+            </form>
+            <div style="margin-top: var(--sp-4);">
+                <a th:href="@{/horarios}" class="btn-kick btn-kick--ghost btn-kick--sm btn-kick--block">VER HORARIOS LIBRES</a>
+            </div>
+        </div>
+    </section>
+</main>
+</body>
+</html>

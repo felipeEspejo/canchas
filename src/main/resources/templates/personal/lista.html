@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Personal')}"></head>
+<body class="stadium-body">
+<th:block th:replace="~{fragments/layout :: nav('personal')}"></th:block>
+
+<main class="stadium-shell">
+    <header class="stadium-header">
+        <div>
+            <h1 class="stadium-title">PERSONAL DEL COMPLEJO</h1>
+            <p class="stadium-subtitle">Recepción agenda y cierra reservas · Administración además maneja canchas, tarifas y balance</p>
+        </div>
+        <div class="stadium-meta">
+            <a th:href="@{/personal(nueva='')}" class="btn-kick btn-kick--lime">CREAR CUENTA</a>
+        </div>
+    </header>
+
+    <th:block th:replace="~{fragments/layout :: notices}"></th:block>
+
+    <section class="scoreline" aria-label="Resumen del personal">
+        <div class="scoreline__cell scoreline__cell--chalk"><span class="scoreline__label">CUENTAS</span><span class="led-value scoreline__number" th:text="${#lists.size(accounts)}">2</span></div>
+        <div class="scoreline__cell scoreline__cell--amber"><span class="scoreline__label">ADMINISTRACIÓN</span><span class="led-value led-value--amber scoreline__number" th:text="${adminCount}">1</span></div>
+        <div class="scoreline__cell scoreline__cell--lime"><span class="scoreline__label">RECEPCIÓN</span><span class="led-value led-value--lime scoreline__number" th:text="${receptionCount}">1</span></div>
+        <div class="scoreline__cell scoreline__cell--chalk"><span class="scoreline__label">SESIÓN ACTUAL</span><span class="mono-code" th:text="${me}">admin</span></div>
+    </section>
+
+    <section class="roster" aria-label="Cuentas">
+        <article class="player-card" th:each="a : ${accounts}" th:classappend="${a.role.name() == 'ADMIN'} ? 'player-card--admin'">
+            <div class="player-card__head">
+                <div class="player-card__crest" aria-hidden="true" th:text="${#strings.toUpperCase(#strings.substring(a.username, 0, 1))}">A</div>
+                <div>
+                    <h2 class="player-card__name" th:text="${a.username}">admin</h2>
+                    <span class="chip" th:classappend="${a.role.name() == 'ADMIN'} ? 'chip--amber' : 'chip--lime'" th:text="${#strings.toUpperCase(a.role.label)}">ADMINISTRADOR</span>
+                </div>
+            </div>
+            <div class="player-card__actions">
+                <a th:href="@{/personal(editar=${a.id})}" class="btn-kick btn-kick--ghost btn-kick--sm">EDITAR</a>
+                <span class="chip chip--neutral" th:if="${a.username == me}">TU CUENTA</span>
+                <form th:unless="${a.username == me}" class="inline-form" th:action="@{/personal/{id}(id=${a.id})}" th:method="delete">
+                    <button type="submit" class="btn-kick btn-kick--red btn-kick--sm">ELIMINAR</button>
+                </form>
+            </div>
+        </article>
+    </section>
+</main>
+
+<div class="slide-backdrop" role="dialog" aria-modal="true" aria-labelledby="staff-panel" th:if="${showCreate or editing != null}">
+    <a class="overlay-close" th:href="@{/personal}" aria-label="Cerrar"></a>
+    <div class="slide-panel">
+        <div class="slide-panel__head">
+            <div>
+                <span class="chip chip--lime" th:text="${editing != null} ? 'EDICIÓN' : 'NUEVA CUENTA'">NUEVA CUENTA</span>
+                <h2 id="staff-panel" class="stadium-title" th:text="${editing != null} ? 'EDITAR CUENTA' : 'CREAR CUENTA'">CREAR CUENTA</h2>
+            </div>
+            <a th:href="@{/personal}" class="btn-kick btn-kick--ghost btn-kick--sm">CERRAR</a>
+        </div>
+        <form th:action="${editing != null} ? @{/personal/{id}(id=${editing.id})} : @{/personal}" th:method="${editing != null} ? 'put' : 'post'">
+            <div class="field-group" th:if="${editing == null}">
+                <label for="usuario" class="field-label">Usuario</label>
+                <input id="usuario" name="usuario" class="field-input" maxlength="30" required autofocus autocomplete="off" placeholder="Ej. recepcion2">
+            </div>
+            <div class="detail-kv__item" th:if="${editing != null}" style="margin-bottom: var(--sp-4);">
+                <span class="detail-kv__k">Usuario</span><span class="detail-kv__v" th:text="${editing.username}">admin</span>
+            </div>
+            <div class="field-group">
+                <label for="rol" class="field-label">Rol</label>
+                <select id="rol" name="rol" class="field-select">
+                    <option th:each="r : ${roles}" th:value="${r}" th:text="${r.label}"
+                            th:selected="${editing != null ? editing.role == r : r.name() == 'RECEPTION'}">Recepción</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <label for="clave" class="field-label" th:text="${editing != null} ? 'Nueva contraseña (opcional, mínimo 6)' : 'Contraseña (mínimo 6)'">Contraseña</label>
+                <input id="clave" name="clave" type="password" minlength="6" class="field-input" autocomplete="new-password" th:required="${editing == null}">
+            </div>
+            <div class="field-group">
+                <label for="confirmacion" class="field-label">Confirmar contraseña</label>
+                <input id="confirmacion" name="confirmacion" type="password" minlength="6" class="field-input" autocomplete="new-password" th:required="${editing == null}">
+            </div>
+            <div class="form-actions">
+                <a th:href="@{/personal}" class="btn-kick btn-kick--ghost">CANCELAR</a>
+                <button type="submit" class="btn-kick btn-kick--lime">GUARDAR</button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

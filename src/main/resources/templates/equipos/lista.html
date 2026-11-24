@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Equipos')}"></head>
+<body class="stadium-body">
+<th:block th:replace="~{fragments/layout :: nav('equipos')}"></th:block>
+
+<main class="stadium-shell">
+    <header class="stadium-header">
+        <div>
+            <h1 class="stadium-title">EQUIPOS CLIENTES</h1>
+            <p class="stadium-subtitle" th:text="${total} + ' equipos registrados · quien reserva siempre es un equipo'">6 equipos registrados</p>
+        </div>
+        <div class="stadium-meta">
+            <a th:href="@{/equipos(nuevo='')}" class="btn-kick btn-kick--lime">REGISTRAR EQUIPO</a>
+        </div>
+    </header>
+
+    <th:block th:replace="~{fragments/layout :: notices}"></th:block>
+
+    <form class="report-filter" th:action="@{/equipos}" method="get" aria-label="Buscar equipo">
+        <div class="field-group" style="margin-bottom:0;"><label for="q" class="field-label">Buscar por nombre</label>
+            <input id="q" type="search" name="q" class="field-input" th:value="${q}" placeholder="Ej. tigres" autocomplete="off"></div>
+        <div></div>
+        <button type="submit" class="btn-kick btn-kick--lime">BUSCAR</button>
+        <a th:href="@{/equipos}" class="btn-kick btn-kick--ghost">VER TODOS</a>
+    </form>
+
+    <section class="roster" aria-label="Equipos">
+        <article class="player-card" th:each="t : ${teams}">
+            <div class="player-card__head">
+                <div class="player-card__crest" aria-hidden="true" th:text="${#strings.substring(t.name, 0, 1)}">L</div>
+                <div>
+                    <h2 class="player-card__name" th:text="${t.name}">LOS TIGRES FC</h2>
+                    <span class="chip chip--neutral" th:text="'CAPITÁN: ' + ${#strings.toUpperCase(t.captain)}">CAPITÁN: ANDRÉS GÓMEZ</span>
+                </div>
+            </div>
+            <div class="detail-kv__item"><span class="detail-kv__k">Teléfono</span><span class="detail-kv__v" th:text="${t.phone}">3001234567</span></div>
+            <div class="player-card__actions">
+                <a th:href="@{/equipos/{id}(id=${t.id})}" class="btn-kick btn-kick--lime btn-kick--sm">VER FICHA</a>
+                <a th:href="@{/reservas/nueva(equipo=${t.id})}" class="btn-kick btn-kick--ghost btn-kick--sm">RESERVAR</a>
+                <a th:href="@{/equipos(editar=${t.id})}" class="btn-kick btn-kick--ghost btn-kick--sm">EDITAR</a>
+            </div>
+        </article>
+    </section>
+    <p class="empty-pitch" th:if="${#lists.isEmpty(teams)}">No se encontraron equipos.</p>
+</main>
+
+<!-- Panel lateral de registro/edición: lo dibuja el servidor con ?nuevo o ?editar=<id> -->
+<div class="slide-backdrop" role="dialog" aria-modal="true" aria-labelledby="team-panel" th:if="${showCreate or editing != null}">
+    <a class="overlay-close" th:href="@{/equipos}" aria-label="Cerrar"></a>
+    <div class="slide-panel">
+        <div class="slide-panel__head">
+            <div>
+                <span class="chip chip--lime" th:text="${editing != null} ? 'EDICIÓN' : 'NUEVO EQUIPO'">NUEVO EQUIPO</span>
+                <h2 id="team-panel" class="stadium-title" th:text="${editing != null} ? 'EDITAR EQUIPO' : 'REGISTRAR EQUIPO'">REGISTRAR EQUIPO</h2>
+            </div>
+            <a th:href="@{/equipos}" class="btn-kick btn-kick--ghost btn-kick--sm">CERRAR</a>
+        </div>
+        <form th:action="${editing != null} ? @{/equipos/{id}(id=${editing.id})} : @{/equipos}" th:method="${editing != null} ? 'put' : 'post'">
+            <div class="field-group">
+                <label for="nombre" class="field-label">Nombre del equipo</label>
+                <input id="nombre" name="nombre" class="field-input" maxlength="30" required autofocus placeholder="Ej. Deportivo Norte"
+                       th:value="${editing != null} ? ${editing.name}">
+                <span class="field-hint">De 3 a 30 caracteres. Se guarda en mayúsculas.</span>
+            </div>
+            <div class="field-group">
+                <label for="capitan" class="field-label">Capitán</label>
+                <input id="capitan" name="capitan" class="field-input" maxlength="60" required placeholder="Nombre y apellido"
+                       th:value="${editing != null} ? ${editing.captain}">
+            </div>
+            <div class="field-group">
+                <label for="telefono" class="field-label">Teléfono</label>
+                <input id="telefono" name="telefono" type="tel" class="field-input" maxlength="18" required placeholder="3001234567"
+                       th:value="${editing != null} ? ${editing.phone}">
+            </div>
+            <div class="form-actions">
+                <a th:href="@{/equipos}" class="btn-kick btn-kick--ghost">CANCELAR</a>
+                <button type="submit" class="btn-kick btn-kick--lime">GUARDAR</button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

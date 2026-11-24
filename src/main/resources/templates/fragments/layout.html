@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<!--
+  Piezas compartidas:
+  head(title)          <head> con las fuentes y la hoja de estilos
+  brand(sub)           escudo y nombre CANCHAS
+  nav(active)          barra superior y barra inferior del celular (active = agenda | reservas | equipos | canchas | tarifas | personal | reportes)
+  notices              avisos: ${ok} (verde) y ${problem} (rojo)
+  money(amount)        $95.000 COP
+  amount(amount)       $95.000 (marcadores)
+  statusChip(status)   estado de una reserva con su color
+  bookingRow(v)        una reserva como fila de fixture (listado y ficha del equipo)
+  lines                líneas de cal de una cancha dibujada con CSS
+-->
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' | CANCHAS'">CANCHAS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&amp;family=Bebas+Neue&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="stadium-body">
+
+<th:block th:fragment="brand(sub)">
+    <span class="stadium-brand__crest" aria-hidden="true">C</span>
+    <span class="stadium-brand__text">
+        <span class="stadium-brand__name">CANCHAS</span>
+        <span class="stadium-brand__sub" th:text="${sub}">RESERVAS POR HORA</span>
+    </span>
+</th:block>
+
+<th:block th:fragment="nav(active)">
+    <header class="stadium-nav">
+        <div class="stadium-nav__inner">
+            <a th:href="@{/agenda}" class="stadium-brand" aria-label="Ir a la agenda">
+                <th:block th:replace="~{fragments/layout :: brand('RESERVAS POR HORA')}"></th:block>
+            </a>
+            <nav class="stadium-nav__links" aria-label="Navegación principal">
+                <a th:href="@{/agenda}" class="stadium-nav__link" th:classappend="${active == 'agenda'} ? 'stadium-nav__link--active'">Agenda</a>
+                <a th:href="@{/reservas}" class="stadium-nav__link" th:classappend="${active == 'reservas'} ? 'stadium-nav__link--active'">Reservas</a>
+                <a th:href="@{/equipos}" class="stadium-nav__link" th:classappend="${active == 'equipos'} ? 'stadium-nav__link--active'">Equipos</a>
+                <th:block sec:authorize="hasRole('ADMIN')">
+                    <a th:href="@{/canchas}" class="stadium-nav__link" th:classappend="${active == 'canchas'} ? 'stadium-nav__link--active'">Canchas</a>
+                    <a th:href="@{/tarifas}" class="stadium-nav__link" th:classappend="${active == 'tarifas'} ? 'stadium-nav__link--active'">Tarifas</a>
+                    <a th:href="@{/personal}" class="stadium-nav__link" th:classappend="${active == 'personal'} ? 'stadium-nav__link--active'">Personal</a>
+                    <a th:href="@{/reportes}" class="stadium-nav__link" th:classappend="${active == 'reportes'} ? 'stadium-nav__link--active'">Balance</a>
+                </th:block>
+            </nav>
+            <div class="stadium-nav__user">
+                <div class="stadium-nav__identity">
+                    <span class="stadium-nav__username" sec:authentication="name">usuario</span>
+                    <span class="stadium-nav__role" sec:authorize="hasRole('ADMIN')">ADMINISTRACIÓN</span>
+                    <span class="stadium-nav__role" sec:authorize="!hasRole('ADMIN')">RECEPCIÓN</span>
+                </div>
+                <form th:action="@{/salir}" method="post">
+                    <button type="submit" class="btn-kick btn-kick--ghost btn-kick--sm">Salir</button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <nav class="stadium-mobile-nav" aria-label="Navegación móvil">
+        <a th:href="@{/agenda}" class="stadium-mobile-nav__item" th:classappend="${active == 'agenda'} ? 'stadium-mobile-nav__item--active'"><span>Agenda</span></a>
+        <a th:href="@{/reservas}" class="stadium-mobile-nav__item" th:classappend="${active == 'reservas'} ? 'stadium-mobile-nav__item--active'"><span>Reservas</span></a>
+        <a th:href="@{/equipos}" class="stadium-mobile-nav__item" th:classappend="${active == 'equipos'} ? 'stadium-mobile-nav__item--active'"><span>Equipos</span></a>
+        <th:block sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/canchas}" class="stadium-mobile-nav__item" th:classappend="${active == 'canchas'} ? 'stadium-mobile-nav__item--active'"><span>Canchas</span></a>
+            <a th:href="@{/tarifas}" class="stadium-mobile-nav__item" th:classappend="${active == 'tarifas'} ? 'stadium-mobile-nav__item--active'"><span>Tarifas</span></a>
+            <a th:href="@{/reportes}" class="stadium-mobile-nav__item" th:classappend="${active == 'reportes'} ? 'stadium-mobile-nav__item--active'"><span>Balance</span></a>
+        </th:block>
+    </nav>
+</th:block>
+
+<div class="flash-stack" th:fragment="notices" th:if="${ok != null or problem != null}">
+    <div class="flash-banner flash-banner--success" role="status" th:if="${ok}">
+        <span class="chip chip--lime">LISTO</span><span th:text="${ok}">Reserva confirmada</span>
+    </div>
+    <div class="flash-banner flash-banner--error" role="alert" th:if="${problem}">
+        <span class="chip chip--red">ATENCIÓN</span><span th:text="${problem}">La cancha ya está reservada</span>
+    </div>
+</div>
+
+<span th:fragment="money(amount)" th:text="'$' + ${#numbers.formatDecimal(amount, 1, 'POINT', 0, 'COMMA')} + ' COP'">$95.000 COP</span>
+<span th:fragment="amount(amount)" th:text="'$' + ${#numbers.formatDecimal(amount, 1, 'POINT', 0, 'COMMA')}">$95.000</span>
+
+<span th:fragment="statusChip(status)" class="chip"
+      th:classappend="${status.name() == 'RESERVED'} ? 'chip--amber' : (${status.name() == 'PLAYED'} ? 'chip--lime' : (${status.name() == 'NO_SHOW'} ? 'chip--red' : 'chip--neutral'))"
+      th:text="${#strings.toUpperCase(status.label)}">RESERVADA</span>
+
+<article th:fragment="bookingRow(v)" class="fixture" th:classappend="${v.booking.pending} ? 'fixture--open' : 'fixture--closed'">
+    <div class="fixture__time">
+        <div class="fixture__clock" th:text="${#temporals.format(v.booking.slot.start(), 'HH:mm')}">19:00</div>
+        <div class="fixture__date" th:text="${#temporals.format(v.booking.slot.date, 'EEE dd/MM/yyyy')}">mar 24/11/2026</div>
+    </div>
+    <div>
+        <h2 class="fixture__team" th:text="${v.team != null} ? ${v.team.name} : '-'">LOS TIGRES FC</h2>
+        <div class="fixture__meta">
+            <span class="chip chip--neutral" th:text="${v.court != null} ? ${v.court.code} + ' · ' + ${v.court.format.label} : '-'">F5-A · Fútbol 5</span>
+            <span th:replace="~{fragments/layout :: statusChip(${v.booking.status})}"></span>
+            <span class="mono-code" style="color:var(--muted);" th:text="${v.booking.slot.label()} + ' · ' + ${v.booking.slot.hours} + ' h'">19:00 – 21:00 · 2 h</span>
+        </div>
+    </div>
+    <div class="fixture__amount-box">
+        <div class="fixture__amount" th:style="${v.booking.status.name() == 'PLAYED'} ? '' : 'color: var(--muted)'">
+            <span th:replace="~{fragments/layout :: money(${v.booking.price})}">$190.000 COP</span>
+        </div>
+        <div class="fixture__end" th:text="${v.booking.status.name() == 'PLAYED'} ? 'COBRADO' : (${v.booking.pending} ? 'POR COBRAR' : 'SIN COBRO')">COBRADO</div>
+    </div>
+    <div class="fixture__actions">
+        <a th:href="@{/reservas/{id}(id=${v.booking.id})}" class="btn-kick btn-kick--sm" th:classappend="${v.booking.pending} ? 'btn-kick--amber' : 'btn-kick--ghost'"
+           th:text="${v.booking.pending} ? 'GESTIONAR' : 'VER'">VER</a>
+    </div>
+</article>
+
+<div class="pitch-lines" aria-hidden="true" th:fragment="lines">
+    <span class="pitch-lines__half"></span><span class="pitch-lines__circle"></span>
+    <span class="pitch-lines__area-l"></span><span class="pitch-lines__area-r"></span>
+    <span class="pitch-lines__goal-l"></span><span class="pitch-lines__goal-r"></span>
+</div>
+</body>
+</html>

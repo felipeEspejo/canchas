@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Reserva')}"></head>
+<body class="stadium-body">
+<th:block th:replace="~{fragments/layout :: nav('reservas')}"></th:block>
+
+<main class="stadium-shell" th:with="b=${view.booking}">
+    <th:block th:replace="~{fragments/layout :: notices}"></th:block>
+
+    <div class="ticket-wrap">
+        <div class="ticket-actions no-print">
+            <a th:href="@{/reservas}" class="btn-kick btn-kick--ghost btn-kick--sm">VOLVER A RESERVAS</a>
+            <a th:href="@{/agenda(fecha=${b.slot.date})}" class="btn-kick btn-kick--ghost btn-kick--sm">VER EN LA AGENDA</a>
+        </div>
+
+        <article class="ticket-stub">
+            <div class="ticket-stub__banner" aria-hidden="true"></div>
+            <header class="ticket-stub__head">
+                <div>
+                    <span th:replace="~{fragments/layout :: statusChip(${b.status})}"></span>
+                    <h1 class="stadium-title" style="margin-top: var(--sp-2);" th:text="${view.team != null} ? ${view.team.name} : 'RESERVA'">LOS TIGRES FC</h1>
+                    <p class="stadium-subtitle" th:text="${#temporals.format(b.slot.date, 'EEEE dd/MM/yyyy')} + ' · ' + ${b.slot.label()}">martes 24/11/2026 · 19:00 – 21:00</p>
+                </div>
+                <div style="text-align: right;">
+                    <span class="scoreline__label">RESERVA N.°</span>
+                    <div class="ticket-stub__id" th:text="'#' + ${b.id.toString().substring(0, 8).toUpperCase()}">#A1B2C3D4</div>
+                </div>
+            </header>
+
+            <div class="ticket-stub__body">
+                <div class="detail-kv__item"><span class="detail-kv__k">Cancha</span><span class="detail-kv__v" th:text="${view.court != null} ? ${view.court.code} + ' · ' + ${view.court.name} : '-'">F5-A · Cancha Norte</span></div>
+                <div class="detail-kv__item"><span class="detail-kv__k">Formato</span><span class="detail-kv__v" th:text="${view.court != null} ? ${view.court.format.label} : '-'">Fútbol 5</span></div>
+                <div class="detail-kv__item"><span class="detail-kv__k">Capitán</span><span class="detail-kv__v" th:text="${view.team != null} ? ${view.team.captain} : '-'">Andrés Gómez</span></div>
+                <div class="detail-kv__item"><span class="detail-kv__k">Teléfono</span><span class="detail-kv__v" th:text="${view.team != null} ? ${view.team.phone} : '-'">3001234567</span></div>
+                <div class="detail-kv__item"><span class="detail-kv__k">Reservada el</span><span class="detail-kv__v" th:text="${#temporals.format(b.bookedAt, 'dd/MM/yyyy HH:mm')}">23/11/2026 10:00</span></div>
+                <div class="detail-kv__item"><span class="detail-kv__k">Cerrada el</span><span class="detail-kv__v" th:text="${b.settledAt != null} ? ${#temporals.format(b.settledAt, 'dd/MM/yyyy HH:mm')} : 'Pendiente'">Pendiente</span></div>
+            </div>
+
+            <div class="quote-lines" aria-label="Franja de precio de cada hora">
+                <div class="quote-line" th:each="h : ${bands}" th:classappend="'quote-line--' + ${h.band.name()}">
+                    <span th:text="${h.label()}">19:00 – 20:00</span>
+                    <span class="chip" th:classappend="${h.band.name() == 'DAY'} ? 'chip--lime' : 'chip--amber'" th:text="${#strings.toUpperCase(h.band.label)}">NOCTURNA</span>
+                    <span></span>
+                </div>
+            </div>
+
+            <div class="ticket-stub__total">
+                <div>
+                    <span class="scoreline__label" th:text="${b.status.name() == 'PLAYED'} ? 'TOTAL COBRADO' : (${b.pending} ? 'TOTAL A COBRAR' : 'PRECIO PACTADO (SIN COBRO)')">TOTAL A COBRAR</span>
+                    <div class="mono-code" style="color: var(--muted);" th:text="${b.slot.hours} + (${b.slot.hours == 1} ? ' HORA' : ' HORAS') + ' · PRECIO FIJADO AL RESERVAR'">2 HORAS</div>
+                </div>
+                <div class="led-value led-value--lime ticket-stub__total-val"><span th:replace="~{fragments/layout :: money(${b.price})}">$190.000 COP</span></div>
+            </div>
+
+            <!-- Acciones según el momento: antes del corte se puede cancelar; desde la hora de inicio se cierra -->
+            <div class="form-actions no-print" th:if="${b.pending}">
+                <form th:if="${canClose}" class="inline-form" th:action="@{/reservas/{id}/jugada(id=${b.id})}" method="post">
+                    <button type="submit" class="btn-kick btn-kick--lime btn-kick--block">MARCAR COMO JUGADA</button>
+                </form>
+                <form th:if="${canClose}" class="inline-form" th:action="@{/reservas/{id}/no-show(id=${b.id})}" method="post">
+                    <button type="submit" class="btn-kick btn-kick--red btn-kick--block">NO SE PRESENTÓ</button>
+                </form>
+                <form th:if="${canCancel}" class="inline-form" th:action="@{/reservas/{id}/cancelar(id=${b.id})}" method="post">
+                    <button type="submit" class="btn-kick btn-kick--ghost btn-kick--block">CANCELAR RESERVA</button>
+                </form>
+            </div>
+            <div class="flash-banner flash-banner--info" th:if="${b.pending and !canClose and !canCancel}">
+                <span class="chip chip--amber">EN ESPERA</span>
+                <span th:text="'Ya no se puede cancelar (faltan menos de ' + ${noticeHours} + ' horas). Cuando empiece el partido márcalo como jugado o como no presentado.'">Ya no se puede cancelar</span>
+            </div>
+            <div class="flash-banner flash-banner--info" th:if="${b.pending and canCancel}">
+                <span class="chip chip--amber">PENDIENTE</span>
+                <span th:text="'Se puede cancelar hasta ' + ${noticeHours} + ' horas antes. Se cobra cuando se marque como jugada.'">Se puede cancelar</span>
+            </div>
+        </article>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Reservas')}"></head>
+<body class="stadium-body">
+<th:block th:replace="~{fragments/layout :: nav('reservas')}"></th:block>
+
+<main class="stadium-shell">
+    <header class="stadium-header">
+        <div>
+            <h1 class="stadium-title">RESERVAS</h1>
+            <p class="stadium-subtitle" th:text="'Del ' + ${#temporals.format(desde, 'dd/MM/yyyy')} + ' al ' + ${#temporals.format(hasta, 'dd/MM/yyyy')}">Del 17/11 al 08/12</p>
+        </div>
+        <div class="stadium-meta">
+            <a th:href="@{/reservas/nueva}" class="btn-kick btn-kick--lime">NUEVA RESERVA</a>
+        </div>
+    </header>
+
+    <th:block th:replace="~{fragments/layout :: notices}"></th:block>
+
+    <section class="scoreline" aria-label="Resumen de las reservas filtradas">
+        <div class="scoreline__cell scoreline__cell--amber"><span class="scoreline__label">PENDIENTES</span><span class="led-value led-value--amber scoreline__number" th:text="${reservedCount}">4</span></div>
+        <div class="scoreline__cell scoreline__cell--lime"><span class="scoreline__label">JUGADAS</span><span class="led-value led-value--lime scoreline__number" th:text="${playedCount}">9</span></div>
+        <div class="scoreline__cell scoreline__cell--chalk"><span class="scoreline__label">CANCELADAS + NO SE PRESENTÓ</span><span class="led-value scoreline__number" th:text="${missedCount}">3</span></div>
+        <div class="scoreline__cell scoreline__cell--lime"><span class="scoreline__label">COBRADO</span><span class="led-value led-value--lime scoreline__number"><span th:replace="~{fragments/layout :: amount(${collected})}">$0</span></span></div>
+    </section>
+
+    <form class="filter-bar" th:action="@{/reservas}" method="get" aria-label="Filtros">
+        <div class="field-group" style="margin-bottom:0;"><label for="desde" class="field-label">Desde</label>
+            <input id="desde" type="date" name="desde" class="field-input" th:value="${desde}"></div>
+        <div class="field-group" style="margin-bottom:0;"><label for="hasta" class="field-label">Hasta</label>
+            <input id="hasta" type="date" name="hasta" class="field-input" th:value="${hasta}"></div>
+        <div class="field-group" style="margin-bottom:0;"><label for="equipo" class="field-label">Equipo</label>
+            <select id="equipo" name="equipo" class="field-select">
+                <option value="">Todos</option>
+                <option th:each="t : ${teams}" th:value="${t.id}" th:text="${t.name}" th:selected="${t.id == equipo}">LOS TIGRES FC</option>
+            </select></div>
+        <div class="field-group" style="margin-bottom:0;"><label for="estado" class="field-label">Estado</label>
+            <select id="estado" name="estado" class="field-select">
+                <option value="">Todos</option>
+                <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}" th:selected="${s == estado}">Reservada</option>
+            </select></div>
+        <button type="submit" class="btn-kick btn-kick--lime">FILTRAR</button>
+        <a th:href="@{/reservas}" class="btn-kick btn-kick--ghost">QUITAR FILTROS</a>
+    </form>
+
+    <section class="fixture-list" aria-label="Reservas">
+        <th:block th:each="v : ${bookings}">
+            <article th:replace="~{fragments/layout :: bookingRow(${v})}"></article>
+        </th:block>
+        <p class="empty-pitch" th:if="${#lists.isEmpty(bookings)}">No hay reservas con esos filtros.</p>
+    </section>
+</main>
+</body>
+</html>
